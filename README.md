@@ -38,4 +38,5 @@
     ```
 
 [Advanced Real-Time Chart Widget](https://www.tradingview.com/widget-docs/widgets/charts/advanced-chart/)  
-[settings.html](https://github.com/karanlyons/binance-enhanced/blob/master/settings.html)
+Widgets / Symbol Details / [Technical Analysis](https://www.tradingview.com/widget-docs/widgets/symbol-details/technical-analysis/)  
+[settings.html](https://github.com/karanlyons/binance-enhanced/blob/master/settings.html)  

@@ -1,124 +1,158 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TradingView Fullscreen Dashboard</title>
-    <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #131722;
-            color: #d1d4dc;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        }
-        .dashboard-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            padding: 16px;
-            box-sizing: border-box;
-        }
-        h1 {
-            font-weight: 500;
-            margin: 0 0 16px 0;
-            flex-shrink: 0;
-            font-size: 24px;
-        }
-        .dashboard-grid {
-            flex-grow: 1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 16px;
-        }
-        .chart-panel {
-            display: flex;
-            flex-direction: column;
-            background-color: #1e222d;
-            border: 1px solid #2a2e39;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        .chart-panel-title {
-            padding: 10px 15px;
-            font-weight: 500;
-            font-size: 16px;
-            border-bottom: 1px solid #2a2e39;
-            flex-shrink: 0;
-        }
-        .widget-wrapper {
-            flex-grow: 1;
-            width: 100%;
-            height: 100%;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradingView Color-Coded Dashboard</title>
+<style>
+  html, body {
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #000;
+  }
+
+  .scaling-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  #dashboard-container {
+    /* Recalculated size for 2px borders */
+    /* Width = 2 groups of 1754px + 10px gap + 20px padding = 3538px */
+    width: 3538px;
+    /* Height = 3 rows of 404px + 20px gaps + 20px padding = 1252px */
+    height: 1252px;
+
+    /* --- ✨ The scale value you provided --- */
+    transform: scale(0.74);
+    /* -------------------------------------- */
+
+    transform-origin: center center;
+    background-color: #131722;
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  .coin-row {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    justify-content: flex-start;
+    width: 100%;
+    flex-grow: 1;
+  }
+
+  /* ✨ UPDATED: Group style with thicker border */
+  .widget-group {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    border: 2px solid #444; /* Thicker border with a fallback color */
+    border-radius: 8px;
+  }
+
+  .tradingview-widget-container {
+    width: 425px;
+    height: 380px;
+    flex-shrink: 0;
+  }
+</style>
 </head>
 <body>
 
-    <div class="dashboard-container">
-        <h1>Market Overview</h1>
+<div class="scaling-container">
+  <div id="dashboard-container" class="dashboard-container"></div>
+</div>
 
-        <div class="dashboard-grid">
-            <!-- ETH/USDT Chart Panel -->
-            <div class="chart-panel">
-                <div class="chart-panel-title">ETH/USDT</div>
-                <div class="widget-wrapper" id="tv_chart_eth"></div>
-            </div>
+<script type="text/javascript">
+  // --- 設定 ---
+  const coins = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA'];
+  const intervals = ['15m', '1h', '4h', '1D'];
+  const exchange = 'BINANCE';
 
-            <!-- SOL/USDT Chart Panel -->
-            <div class="chart-panel">
-                <div class="chart-panel-title">SOL/USDT</div>
-                <div class="widget-wrapper" id="tv_chart_sol"></div>
-            </div>
+  // --- ✨ NEW: Color mapping for each coin ---
+  const coinColors = {
+    'BTC': '#F7931A', // Bitcoin Orange
+    'ETH': '#627EEA', // Ethereum Blue-Purple
+    'SOL': '#9945FF', // Solana Purple
+    'XRP': '#00A5F0', // Ripple Bright Blue
+    'DOGE': '#C2A633', // Dogecoin Gold-Yellow
+    'ADA': '#0033AD'  // Cardano Blue
+  };
 
-            <!-- ADA/USDT Chart Panel -->
-            <div class="chart-panel">
-                <div class="chart-panel-title">ADA/USDT</div>
-                <div class="widget-wrapper" id="tv_chart_ada"></div>
-            </div>
+  // --- 動態生成函式 (無需變更) ---
+  function createWidget(symbol, interval) {
+    const widgetContainer = document.createElement('div');
+    widgetContainer.className = 'tradingview-widget-container';
+    
+    const script = document.createElement('script');
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js';
+    script.async = true;
+    
+    const config = {
+      "interval": interval,
+      "width": 425,
+      "isTransparent": false,
+      "height": 380,
+      "symbol": `${exchange}:${symbol}USDT`,
+      "showIntervalTabs": true,
+      "locale": "en",
+      "colorTheme": "dark"
+    };
 
-            <!-- SUI/USDT Chart Panel -->
-            <div class="chart-panel">
-                <div class="chart-panel-title">SUI/USDT</div>
-                <div class="widget-wrapper" id="tv_chart_sui"></div>
-            </div>
-        </div>
-    </div>
+    script.innerHTML = JSON.stringify(config);
+    widgetContainer.appendChild(script);
+    return widgetContainer;
+  }
 
-    <!-- TradingView Widget Script -->
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <script type="text/javascript">
-        function createTradingViewWidget(containerId, symbol) {
-            new TradingView.widget({
-                "autosize": true,
-                "symbol": symbol,
-                "interval": "60",
-                "timezone": "Etc/UTC",
-                "theme": "light",
-                "style": "1",
-                "locale": "en", // Changed locale to English for consistency
-                "enable_publishing": false,
-                "hide_side_toolbar": true,
-                "save_image": false,
-                "details": true,
-                "studies": [
-                    "WilliamsAlligator@tv-basicstudies",
-                    //"BB@tv-basicstudies",
-                    //"MAExp@tv-basicstudies",
-                    "MACD@tv-basicstudies"
-                ],
-                "container_id": containerId
-            });
-        }
+  // --- ✨ 主程式 (已更新邏輯以應用顏色) ---
+  const dashboard = document.getElementById('dashboard-container');
 
-        createTradingViewWidget("tv_chart_eth", "BINANCE:ETHUSDT");
-        createTradingViewWidget("tv_chart_sol", "BINANCE:SOLUSDT");
-        createTradingViewWidget("tv_chart_ada", "BINANCE:ADAUSDT");
-        createTradingViewWidget("tv_chart_sui", "BINANCE:SUIUSDT");
-    </script>
+  for (let i = 0; i < coins.length; i += 2) {
+    const coin1 = coins[i];
+    const coin2 = coins[i + 1];
+
+    const row = document.createElement('div');
+    row.className = 'coin-row';
+
+    if (coin1 && coin2) {
+      // Create a group for the first coin in the pair
+      const group1 = document.createElement('div');
+      group1.className = 'widget-group';
+      // ✨ Apply the specific border color
+      if (coinColors[coin1]) {
+        group1.style.borderColor = coinColors[coin1];
+      }
+      intervals.forEach(interval => {
+        group1.appendChild(createWidget(coin1, interval));
+      });
+      row.appendChild(group1);
+
+      // Create a group for the second coin in the pair
+      const group2 = document.createElement('div');
+      group2.className = 'widget-group';
+      // ✨ Apply the specific border color
+      if (coinColors[coin2]) {
+        group2.style.borderColor = coinColors[coin2];
+      }
+      intervals.forEach(interval => {
+        group2.appendChild(createWidget(coin2, interval));
+      });
+      row.appendChild(group2);
+    }
+    dashboard.appendChild(row);
+  }
+</script>
 
 </body>
 </html>
