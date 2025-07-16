@@ -3,62 +3,93 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TradingView Color-Coded Dashboard</title>
+<title>TradingView Dashboard</title>
 <style>
   html, body {
     height: 100vh;
     width: 100vw;
     margin: 0;
     padding: 0;
-    overflow: hidden;
+    overflow: auto; /* Allow scrolling if content overflows */
     background-color: #000;
+    color: #fff;
+    font-family: sans-serif;
+  }
+
+  #controls {
+    padding: 10px;
+    text-align: center;
+    background-color: #131722;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  #controls label {
+    margin-right: 10px;
+    font-size: 14px;
+    color: #B2B5BE;
+  }
+
+  /* ✨ NEW: TradingView-style dropdown */
+  #coin-select {
+    background-color: #2A2D35;
+    color: #E0E3EB;
+    border: 1px solid #434651;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none; /* Remove default arrow on Chrome/Safari */
+    -moz-appearance: none; /* Remove default arrow on Firefox */
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2212%22%20height%3D%227%22%20viewBox%3D%220%200%2012%207%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1.5%201.5L6%205.5L10.5%201.5%22%20stroke%3D%22%23B2B5BE%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 30px; /* Make space for the custom arrow */
+  }
+
+  #coin-select:hover {
+    background-color: #363A45;
+  }
+
+  #coin-select:focus {
+    outline: none;
+    border-color: #2962FF;
   }
 
   .scaling-container {
     display: flex;
     justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
+    align-items: flex-start; /* Align to top */
+    padding-top: 20px;
+    padding-bottom: 20px;
   }
 
   #dashboard-container {
-    /* Recalculated size for 2px borders */
-    /* Width = 2 groups of 1754px + 10px gap + 20px padding = 3538px */
-    width: 3538px;
-    /* Height = 3 rows of 404px + 20px gaps + 20px padding = 1252px */
-    height: 1252px;
-
-    /* --- ✨ The scale value you provided --- */
-    transform: scale(0.66);
-    /* -------------------------------------- */
-
-    transform-origin: center center;
-    background-color: #131722;
-    font-family: sans-serif;
+    /* Width is determined by content */
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 10px;
-    box-sizing: border-box;
+    justify-content: center;
+    align-items: center;
   }
 
-  .coin-row {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-    justify-content: flex-start;
-    width: 100%;
-    flex-grow: 1;
-  }
-
-  /* ✨ UPDATED: Group style with thicker border */
   .widget-group {
     display: flex;
     gap: 10px;
     padding: 10px;
-    border: 2px solid #444; /* Thicker border with a fallback color */
+    background-color: #131722;
     border-radius: 8px;
+  }
+
+  /* ✨ UPDATED: Reverted to Flexbox for robust wrapping */
+  .widget-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    border: 2px solid #444;
+    border-radius: 8px;
+    height: 790px; /* Explicitly set height to contain both widgets */
   }
 
   .tradingview-widget-container {
@@ -70,32 +101,88 @@
 </head>
 <body>
 
+<div id="controls">
+  <label for="coin-select">選擇貨幣:</label>
+  <select id="coin-select"></select>
+</div>
+
 <div class="scaling-container">
-  <div id="dashboard-container" class="dashboard-container"></div>
+  <div id="dashboard-container"></div>
 </div>
 
 <script type="text/javascript">
-  // --- 設定 ---
   const coins = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA'];
   const intervals = ['15m', '1h', '4h', '1D'];
   const exchange = 'BINANCE';
 
-  // --- ✨ NEW: Color mapping for each coin ---
-  const coinColors = {
-    'BTC': '#F7931A', // Bitcoin Orange
-    'ETH': '#627EEA', // Ethereum Blue-Purple
-    'SOL': '#9945FF', // Solana Purple
-    'XRP': '#00A5F0', // Ripple Bright Blue
-    'DOGE': '#C2A633', // Dogecoin Gold-Yellow
-    'ADA': '#0033AD'  // Cardano Blue
+  // --- ✨ NEW: Interval mapping for Advanced Chart widget ---
+  const advancedChartIntervals = {
+    '15m': '15',
+    '1h': '60',
+    '4h': '240',
+    '1D': 'D'
   };
 
-  // --- 動態生成函式 (無需變更) ---
-  function createWidget(symbol, interval) {
-    const widgetContainer = document.createElement('div');
-    widgetContainer.className = 'tradingview-widget-container';
+  const coinColors = {
+    'BTC': '#F7931A',
+    'ETH': '#627EEA',
+    'SOL': '#9945FF',
+    'XRP': '#00A5F0',
+    'DOGE': '#C2A633',
+    'ADA': '#0033AD'
+  };
+
+  const dashboard = document.getElementById('dashboard-container');
+  const coinSelect = document.getElementById('coin-select');
+
+  function createAdvancedChartWidget(symbol, interval) {
+    const container = document.createElement('div');
+    container.className = 'tradingview-widget-container';
     
     const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+    script.async = true;
+
+    const config = {
+      "allow_symbol_change": false, // Set to false to lock symbol
+      "calendar": false,
+      "details": false,
+      "hide_side_toolbar": true,
+      "hide_top_toolbar": false, // Show top toolbar for interval selection
+      "hide_legend": false,
+      "hide_volume": false,
+      "hotlist": false,
+      // ✨ UPDATED: Use the correct interval from the map
+      "interval": advancedChartIntervals[interval], 
+      "locale": "en",
+      "save_image": false, // Disabled save button
+      "style": "1",
+      "symbol": `${exchange}:${symbol}USDT`,
+      "theme": "dark",
+      "timezone": "Etc/UTC",
+      "backgroundColor": "#131722",
+      "gridColor": "rgba(242, 242, 242, 0.06)",
+      "watchlist": [],
+      "withdateranges": false,
+      "compareSymbols": [],
+      "studies": [
+        "STD;MA%Ribbon"
+      ],
+      "autosize": true
+    };
+
+    script.innerHTML = JSON.stringify(config);
+    container.appendChild(script);
+    return container;
+  }
+
+  function createTAWidget(symbol, interval) {
+    const container = document.createElement('div');
+    container.className = 'tradingview-widget-container';
+    
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
     script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js';
     script.async = true;
     
@@ -105,52 +192,58 @@
       "isTransparent": false,
       "height": 380,
       "symbol": `${exchange}:${symbol}USDT`,
-      "showIntervalTabs": true,
+      "showIntervalTabs": false, // Hide tabs as interval is fixed
       "locale": "en",
       "colorTheme": "dark"
     };
 
     script.innerHTML = JSON.stringify(config);
-    widgetContainer.appendChild(script);
-    return widgetContainer;
+    container.appendChild(script);
+    return container;
   }
 
-  // --- ✨ 主程式 (已更新邏輯以應用顏色) ---
-  const dashboard = document.getElementById('dashboard-container');
+  function displayCoinWidgets(coin) {
+    dashboard.innerHTML = '';
 
-  for (let i = 0; i < coins.length; i += 2) {
-    const coin1 = coins[i];
-    const coin2 = coins[i + 1];
+    const group = document.createElement('div');
+    group.className = 'widget-group';
+    
+    intervals.forEach(interval => {
+      const column = document.createElement('div');
+      column.className = 'widget-column';
 
-    const row = document.createElement('div');
-    row.className = 'coin-row';
-
-    if (coin1 && coin2) {
-      // Create a group for the first coin in the pair
-      const group1 = document.createElement('div');
-      group1.className = 'widget-group';
-      // ✨ Apply the specific border color
-      if (coinColors[coin1]) {
-        group1.style.borderColor = coinColors[coin1];
+      // ✨ UPDATED: Apply border color to the column
+      if (coinColors[coin]) {
+        column.style.borderColor = coinColors[coin];
       }
-      intervals.forEach(interval => {
-        group1.appendChild(createWidget(coin1, interval));
-      });
-      row.appendChild(group1);
 
-      // Create a group for the second coin in the pair
-      const group2 = document.createElement('div');
-      group2.className = 'widget-group';
-      // ✨ Apply the specific border color
-      if (coinColors[coin2]) {
-        group2.style.borderColor = coinColors[coin2];
-      }
-      intervals.forEach(interval => {
-        group2.appendChild(createWidget(coin2, interval));
-      });
-      row.appendChild(group2);
-    }
-    dashboard.appendChild(row);
+      const chartWidget = createAdvancedChartWidget(coin, interval);
+      const taWidget = createTAWidget(coin, interval);
+
+      column.appendChild(chartWidget);
+      column.appendChild(taWidget);
+      group.appendChild(column);
+    });
+
+    dashboard.appendChild(group);
+  }
+
+  function populateDropdown() {
+    coins.forEach(coin => {
+      const option = document.createElement('option');
+      option.value = coin;
+      option.textContent = coin;
+      coinSelect.appendChild(option);
+    });
+  }
+
+  coinSelect.addEventListener('change', (e) => {
+    displayCoinWidgets(e.target.value);
+  });
+
+  populateDropdown();
+  if (coins.length > 0) {
+    displayCoinWidgets(coins[0]);
   }
 </script>
 
