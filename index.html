@@ -23,6 +23,28 @@
     position: sticky;
     top: 0;
     z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  .keyboard-hint {
+    font-size: 12px;
+    color: #B2B5BE;
+    background-color: #2A2D35;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #434651;
+  }
+
+  .keyboard-hint kbd {
+    background-color: #434651;
+    color: #E0E3EB;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 11px;
   }
 
   #controls label {
@@ -141,13 +163,18 @@
 <body>
 
 <div id="controls">
-  <label for="coin-select">選擇貨幣:</label>
-  <div class="coin-selection-container">
-    <select id="coin-select"></select>
-    <button id="coin-icon-button" class="coin-icon-button" title="開啟 AltFins 分析頁面">
-      <img id="coin-icon" src="" alt="Coin Icon" style="display: none;">
-    </button>
+  <div>
+    <label for="coin-select">選擇貨幣:</label>
+    <div class="coin-selection-container">
+      <select id="coin-select"></select>
+      <button id="coin-icon-button" class="coin-icon-button" title="開啟 AltFins 分析頁面">
+        <img id="coin-icon" src="" alt="Coin Icon" style="display: none;">
+      </button>
+    </div>
   </div>
+  <!-- <div class="keyboard-hint">
+    <kbd>Ctrl</kbd> + <kbd>M</kbd> 開啟全部 AltFins 頁面
+  </div> -->
 </div>
 
 <div class="scaling-container">
@@ -308,6 +335,67 @@
     window.open(url, '_blank');
   }
 
+  // ✨ NEW: Open all AltFins pages at once
+  function openAllAltFinsPages() {
+    console.log('Opening all AltFins pages for coins:', coins);
+    
+    // Show user notification
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 60px;
+      right: 20px;
+      background-color: #2A2D35;
+      color: #E0E3EB;
+      padding: 10px 15px;
+      border-radius: 6px;
+      border: 1px solid #434651;
+      z-index: 1000;
+      font-size: 14px;
+      max-width: 300px;
+    `;
+    notification.textContent = `正在開啟 ${coins.length} 個 AltFins 頁面...`;
+    document.body.appendChild(notification);
+    
+    let successCount = 0;
+    let failCount = 0;
+    
+    coins.forEach((coin, index) => {
+      setTimeout(() => {
+        const url = `https://jacobhsu.github.io/altfins-widgets/${coin}`;
+        console.log(`Opening ${coin}: ${url}`);
+        const newWindow = window.open(url, '_blank');
+        
+        if (newWindow) {
+          successCount++;
+        } else {
+          failCount++;
+          console.warn(`Failed to open window for ${coin}. Popup blocker might be active.`);
+        }
+        
+        // Update notification after last attempt
+        if (index === coins.length - 1) {
+          setTimeout(() => {
+            if (failCount > 0) {
+              notification.innerHTML = `
+                成功開啟 ${successCount} 個頁面<br>
+                ${failCount} 個被阻擋 - 請允許彈出視窗
+              `;
+              notification.style.backgroundColor = '#FF6B6B';
+            } else {
+              notification.textContent = `成功開啟所有 ${successCount} 個頁面！`;
+              notification.style.backgroundColor = '#4CAF50';
+            }
+            
+            setTimeout(() => {
+              document.body.removeChild(notification);
+            }, 3000);
+          }, 500);
+        }
+      }, index * 200); // 200ms delay between each window
+    });
+  }
+
   function populateDropdown() {
     coins.forEach(coin => {
       const option = document.createElement('option');
@@ -327,6 +415,14 @@
     const selectedCoin = coinSelect.value;
     if (selectedCoin) {
       openAltFinsPage(selectedCoin);
+    }
+  });
+
+  // ✨ NEW: Keyboard shortcut Ctrl+M to open all AltFins pages
+  document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey && event.key === 'm') {
+      event.preventDefault(); // Prevent default browser behavior
+      openAllAltFinsPages();
     }
   });
 
