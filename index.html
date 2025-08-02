@@ -161,6 +161,59 @@
     height: 380px;
     flex-shrink: 0;
   }
+
+  /* ✨ 響應式滿版動態調整 - 針對不同螢幕尺寸優化 */
+  @media screen and (max-width: 1920px) and (min-width: 1680px) and (min-width: 1440px) {
+    /* 1440x900 和類似解析度的優化 */
+    .widget-column {
+      height: calc(100vh - 120px); /* 動態高度，減去控制欄和邊距 */
+    }
+    
+    .tradingview-widget-container {
+      width: calc((100vw - 120px) / 4 - 20px); /* 動態寬度，4個欄位平分 */
+      height: calc((100vh - 140px) / 2 - 10px); /* 動態高度，2個widget垂直排列 */
+      min-width: 350px; /* 最小寬度保證可讀性 */
+      min-height: 300px; /* 最小高度保證可讀性 */
+    }
+    
+    .widget-group {
+      width: calc(100vw - 40px); /* 幾乎滿版寬度 */
+      max-width: calc(100vw - 40px);
+      justify-content: space-between;
+    }
+  }
+
+  @media screen and (max-width: 767px) {
+    /* 手機優化 */
+    .widget-group {
+      flex-direction: column;
+      width: calc(100vw - 10px);
+    }
+    
+    .widget-column {
+      width: 100%;
+      height: auto;
+      margin-bottom: 10px;
+    }
+    
+    .tradingview-widget-container {
+      width: 100%;
+      height: 300px;
+    }
+    
+    #controls {
+      flex-direction: column;
+      gap: 10px;
+      padding: 5px;
+    }
+  }
+
+  /* ✨ 動態縮放容器 - 保持布局不變但自動適應 */
+  .auto-scale-container {
+    transform-origin: top center;
+    transition: transform 0.3s ease;
+  }
+
 </style>
 </head>
 <body>
@@ -175,9 +228,6 @@
       </button>
     </div>
   </div>
-  <!-- <div class="keyboard-hint">
-    <kbd>Ctrl</kbd> + <kbd>M</kbd> 開啟全部 AltFins 頁面
-  </div> -->
 </div>
 
 <div class="scaling-container">
@@ -421,6 +471,7 @@
     }
   });
 
+
   // ✨ NEW: Keyboard shortcut Ctrl+M to open all AltFins pages
   document.addEventListener('keydown', (event) => {
     if (event.ctrlKey && event.key === 'm') {
@@ -429,10 +480,86 @@
     }
   });
 
+  // ✨ 自動適應縮放功能
+  let currentScale = 1;
+
+  function calculateOptimalScale() {
+    const container = document.getElementById('dashboard-container');
+    if (!container.firstChild) return 1;
+
+    const widgetGroup = container.firstChild;
+    const containerWidth = widgetGroup.scrollWidth;
+    const containerHeight = widgetGroup.scrollHeight;
+    
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight - 60; // 減去控制欄高度
+    
+    const scaleX = (viewportWidth - 40) / containerWidth; // 留邊距
+    const scaleY = (viewportHeight - 40) / containerHeight;
+    
+    // 使用較小的縮放比例以確保完全適配
+    return Math.min(scaleX, scaleY, 1); // 不超過原始大小
+  }
+
+  function applyDynamicScaling() {
+    const container = document.getElementById('dashboard-container');
+    if (!container.firstChild) return;
+
+    // 檢查是否為特定解析度，如果是則使用 CSS 媒體查詢處理
+    if (window.innerWidth === 1440 && window.innerHeight === 900) {
+      container.style.transform = 'none';
+      return;
+    }
+
+    // 對於其他解析度，計算並應用縮放
+    const scale = calculateOptimalScale();
+    currentScale = scale;
+    
+    if (scale < 0.95) { // 只有當需要縮小時才應用縮放
+      container.style.transform = `scale(${scale})`;
+      container.classList.add('auto-scale-container');
+    } else {
+      container.style.transform = 'none';
+      container.classList.remove('auto-scale-container');
+    }
+  }
+
+  // ✨ 視窗大小改變時重新計算縮放
+  function handleResize() {
+    // 防抖處理，避免頻繁計算
+    clearTimeout(window.resizeTimeout);
+    window.resizeTimeout = setTimeout(() => {
+      applyDynamicScaling();
+    }, 150);
+  }
+
+  // ✨ 鍵盤快捷鍵
+  document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey && event.key === 'm') {
+      event.preventDefault();
+      openAllAltFinsPages();
+    }
+  });
+
+  // ✨ 監聽視窗大小變化
+  window.addEventListener('resize', handleResize);
+
+  // ✨ 頁面載入完成後應用初始縮放
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      applyDynamicScaling();
+    }, 500); // 等待 TradingView widgets 載入
+  });
+
   populateDropdown();
   if (coins.length > 0) {
     displayCoinWidgets(coins[0]);
     updateCoinIcon(coins[0]);
+    
+    // 在顯示 widgets 後應用縮放
+    setTimeout(() => {
+      applyDynamicScaling();
+    }, 1000);
   }
 </script>
 
