@@ -505,12 +505,6 @@
     const container = document.getElementById('dashboard-container');
     if (!container.firstChild) return;
 
-    // 檢查是否為特定解析度，如果是則使用 CSS 媒體查詢處理
-    if (window.innerWidth === 1440 && window.innerHeight === 900) {
-      container.style.transform = 'none';
-      return;
-    }
-
     // 對於其他解析度，計算並應用縮放
     const scale = calculateOptimalScale();
     currentScale = scale;
