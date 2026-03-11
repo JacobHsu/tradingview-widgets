@@ -214,7 +214,7 @@
 </div>
 
 <script type="text/javascript">
-  const coins = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'BNB'];
+  const coins = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'USOX', 'XAUT'];
   const intervals = ['15m', '1h', '4h', '1D'];
   const exchange = 'BINANCE';
 
@@ -227,30 +227,44 @@
   };
 
   const coinColors = {
-    'BTC': '#F7931A',
-    'ETH': '#627EEA',
-    'SOL': '#9945FF',
-    'XRP': '#00A5F0',
+    'BTC':  '#F7931A',
+    'ETH':  '#627EEA',
+    'SOL':  '#9945FF',
+    'XRP':  '#00A5F0',
     'DOGE': '#C2A633',
-    'ADA': '#0033AD',
-    'BNB': '#F3BA2F'
+    'USOX': '#2775CA',
+    'XAUT': '#FFD700'
   };
 
-  // ✨ NEW: CoinGecko image data for coin icons
+  // 完整 TradingView symbol 覆蓋（非 BINANCE spot 的幣種）
+  const coinSymbolOverrides = {
+    'USOX': 'PIONEX:USOXUSDT.P',
+    'XAUT': 'PIONEX:XAUTUSDT.P'
+  };
+
+  // CoinGecko icon（一般幣種）
   const coinGeckoData = {
-    'BTC': { id: '1', name: 'bitcoin' },
-    'ETH': { id: '279', name: 'ethereum' },
-    'SOL': { id: '4128', name: 'solana' },
-    'XRP': { id: '44', name: 'xrp-symbol-white-128' },
-    'DOGE': { id: '5', name: 'dogecoin' },
-    'ADA': { id: '975', name: 'cardano' },
-    'BNB': { id: '825', name: 'bnb-icon2_2x' }
+    'BTC':  { id: '1',    name: 'bitcoin' },
+    'ETH':  { id: '279',  name: 'ethereum' },
+    'SOL':  { id: '4128', name: 'solana' },
+    'XRP':  { id: '44',   name: 'xrp-symbol-white-128' },
+    'DOGE': { id: '5',    name: 'dogecoin' },
+  };
+
+  // 直接指定圖片 URL（非 CoinGecko 來源）
+  const coinIconUrls = {
+    'USOX': 'https://assets.coincap.io/assets/icons/usdt@2x.png',
+    'XAUT': 'https://assets.coincap.io/assets/icons/xaut@2x.png'
   };
 
   const dashboard = document.getElementById('dashboard-container');
   const coinSelect = document.getElementById('coin-select');
   const coinIconButton = document.getElementById('coin-icon-button');
   const coinIcon = document.getElementById('coin-icon');
+
+  function getTVSymbol(coin) {
+    return coinSymbolOverrides[coin] || `${exchange}:${coin}USDT`;
+  }
 
   function createAdvancedChartWidget(symbol, interval) {
     const container = document.createElement('div');
@@ -276,7 +290,7 @@
       "locale": "en",
       "save_image": false, // Disabled save button
       "style": "1",
-      "symbol": `${exchange}:${symbol}USDT`,
+      "symbol": getTVSymbol(symbol),
       "theme": "dark",
       "timezone": "Etc/UTC",
       "backgroundColor": "#131722",
@@ -311,7 +325,7 @@
       "width": 425,
       "isTransparent": false,
       "height": 380,
-      "symbol": `${exchange}:${symbol}USDT`,
+      "symbol": getTVSymbol(symbol),
       "showIntervalTabs": false, // Hide tabs as interval is fixed
       "locale": "en",
       "colorTheme": "dark"
@@ -350,9 +364,14 @@
 
   // ✨ NEW: Update coin icon based on selected coin
   function updateCoinIcon(coin) {
-    if (coinGeckoData[coin]) {
+    let iconUrl = null;
+    if (coinIconUrls[coin]) {
+      iconUrl = coinIconUrls[coin];
+    } else if (coinGeckoData[coin]) {
       const { id, name } = coinGeckoData[coin];
-      const iconUrl = `https://assets.coingecko.com/coins/images/${id}/standard/${name}.png`;
+      iconUrl = `https://assets.coingecko.com/coins/images/${id}/standard/${name}.png`;
+    }
+    if (iconUrl) {
       coinIcon.src = iconUrl;
       coinIcon.style.display = 'block';
       coinIconButton.disabled = false;
