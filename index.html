@@ -32,25 +32,7 @@
     gap: 20px;
   }
 
-  .keyboard-hint {
-    font-size: 12px;
-    color: #B2B5BE;
-    background-color: #2A2D35;
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid #434651;
-  }
-
-  .keyboard-hint kbd {
-    background-color: #434651;
-    color: #E0E3EB;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-family: monospace;
-    font-size: 11px;
-  }
-
-  #controls label {
+#controls label {
     margin-right: 10px;
     font-size: 14px;
     color: #B2B5BE;
@@ -162,7 +144,7 @@
   }
 
   /* ✨ 響應式滿版動態調整 - 針對不同螢幕尺寸優化 */
-  @media screen and (max-width: 1920px) and (min-width: 1680px) and (min-width: 1440px) {
+  @media screen and (max-width: 1920px) and (min-width: 1680px) {
     /* 1440x900 和類似解析度的優化 */
     .widget-column {
       height: calc(100vh - 120px); /* 動態高度，減去控制欄和邊距 */
@@ -207,10 +189,8 @@
     }
   }
 
-  /* ✨ 動態縮放容器 - 保持布局不變但自動適應 */
   .auto-scale-container {
     transform-origin: top center;
-    transition: transform 0.3s ease;
   }
 
 </style>
@@ -462,8 +442,13 @@
 
   coinSelect.addEventListener('change', (e) => {
     const selectedCoin = e.target.value;
+    dashboard.style.visibility = 'hidden';
     displayCoinWidgets(selectedCoin);
     updateCoinIcon(selectedCoin);
+    requestAnimationFrame(() => {
+      applyDynamicScaling();
+      dashboard.style.visibility = 'visible';
+    });
   });
 
   coinIconButton.addEventListener('click', () => {
@@ -482,9 +467,6 @@
     }
   });
 
-  // ✨ 自動適應縮放功能
-  let currentScale = 1;
-
   function calculateOptimalScale() {
     const container = document.getElementById('dashboard-container');
     if (!container.firstChild) return 1;
@@ -493,8 +475,9 @@
     const containerWidth = widgetGroup.scrollWidth;
     const containerHeight = widgetGroup.scrollHeight;
     
+    const controls = document.getElementById('controls');
     const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight - 60; // 減去控制欄高度
+    const viewportHeight = window.innerHeight - controls.getBoundingClientRect().height;
     
     const scaleX = (viewportWidth - 40) / containerWidth; // 留邊距
     const scaleY = (viewportHeight - 40) / containerHeight;
@@ -509,7 +492,6 @@
 
     // 對於其他解析度，計算並應用縮放
     const scale = calculateOptimalScale();
-    currentScale = scale;
     
     if (scale < 0.95) { // 只有當需要縮小時才應用縮放
       container.style.transform = `scale(${scale})`;
@@ -529,33 +511,17 @@
     }, 150);
   }
 
-  // ✨ 鍵盤快捷鍵
-  document.addEventListener('keydown', (event) => {
-    if (event.ctrlKey && event.key === 'm') {
-      event.preventDefault();
-      openAllAltFinsPages();
-    }
-  });
-
-  // ✨ 監聽視窗大小變化
   window.addEventListener('resize', handleResize);
-
-  // ✨ 頁面載入完成後應用初始縮放
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      applyDynamicScaling();
-    }, 500); // 等待 TradingView widgets 載入
-  });
 
   populateDropdown();
   if (coins.length > 0) {
+    dashboard.style.visibility = 'hidden';
     displayCoinWidgets(coins[0]);
     updateCoinIcon(coins[0]);
-    
-    // 在顯示 widgets 後應用縮放
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       applyDynamicScaling();
-    }, 1000);
+      dashboard.style.visibility = 'visible';
+    });
   }
 </script>
 
