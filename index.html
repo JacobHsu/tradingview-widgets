@@ -153,7 +153,6 @@
     padding: 10px;
     border: 2px solid #444;
     border-radius: 8px;
-    height: 790px; /* Explicitly set height to contain both widgets */
   }
 
   .tradingview-widget-container {
@@ -283,6 +282,7 @@
     script.async = true;
 
     const config = {
+      "height": 600,
       "allow_symbol_change": false, // Set to false to lock symbol
       "calendar": false,
       "details": false,
